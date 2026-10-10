@@ -1,0 +1,11 @@
+{
+  "name": "@finance-app/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "test": "vitest",
+    "lint": "eslint ."
+  }
+}
