@@ -1,8 +1,7 @@
-type AccountEntry = {
-  direction: "IN" | "OUT" | string;
+export type AccountEntry = {
+  direction: "IN" | "OUT";
   amount: number;
 };
-
 export function calculateAccountBalance(
   initialBalance: number,
   entries: AccountEntry[],
