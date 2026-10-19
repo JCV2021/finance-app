@@ -17,6 +17,12 @@ export type Transfer = {
 };
 
 export function createTransfer(input: TransferInput): Transfer {
+  if (input.amount <= 0) {
+    throw new Error(
+      "El importe de la transferencia debe ser mayor que cero",
+    );
+  }
+
   return {
     type: "TRANSFER",
     amount: input.amount,

@@ -29,4 +29,16 @@ describe("createTransfer", () => {
       },
     ]);
   });
+
+  it("rechaza una transferencia con importe cero", () => {
+    const input: TransferInput = {
+      amount: 0,
+      sourceAccountId: "cash",
+      destinationAccountId: "bank",
+    };
+
+    expect(() => createTransfer(input)).toThrow(
+      "El importe de la transferencia debe ser mayor que cero",
+    );
+  });
 });
