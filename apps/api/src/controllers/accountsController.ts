@@ -1,3 +1,4 @@
+import type { CreateAccountInput } from "./createAccountInput.js";
 import type { AccountsRepository } from "../repositories/accountsRepository.js";
 
 export class AccountsController {
@@ -13,5 +14,9 @@ export class AccountsController {
     }
 
     return account;
+  }
+
+  async create(input: CreateAccountInput) {
+    return this.accountsRepository.create(input);
   }
 }

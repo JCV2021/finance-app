@@ -1,14 +1,35 @@
 import "dotenv/config";
-import { createServer } from "node:http";
+import { createServer, type IncomingMessage } from "node:http";
 import { healthRoute } from "./routes/health.js";
 import { getAccountById } from "./routes/accounts.js";
 import { AccountsController } from "./controllers/accountsController.js";
 import { PostgresAccountsRepository } from "./repositories/postgresAccountsRepository.js";
+import type { CreateAccountInput } from "./controllers/createAccountInput.js";
 
 const accountsRepository = new PostgresAccountsRepository();
 const accountsController = new AccountsController(accountsRepository);
 
-const server = createServer((req, res) => {
+function readJsonBody(req: IncomingMessage): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    let body = "";
+
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+
+    req.on("end", () => {
+      try {
+        resolve(JSON.parse(body));
+      } catch {
+        reject(new Error("JSON inválido"));
+      }
+    });
+
+    req.on("error", reject);
+  });
+}
+
+const server = createServer(async (req, res) => {
   if (req.method === "GET" && req.url === "/api/v1/health") {
     const data = healthRoute();
 
@@ -26,6 +47,27 @@ const server = createServer((req, res) => {
     return;
   }
 
+  if (req.method === "POST" && req.url === "/api/v1/accounts") {
+  const body = await readJsonBody(req);
+  const input = body as CreateAccountInput;
+
+  const account = await accountsController.create(input);
+
+  res.writeHead(201, {
+    "Content-Type": "application/json",
+  });
+
+  res.end(
+    JSON.stringify({
+      success: true,
+      data: account,
+      error: null,
+      meta: {},
+    }),
+  );
+
+  return;
+}
   const accountMatch = req.url?.match(
     /^\/api\/v1\/accounts\/([^/]+)$/,
   );
