@@ -1,9 +1,7 @@
 import { pool } from "../database.js";
 import type { CreateAccountInput } from "../controllers/createAccountInput.js";
-import type {
-  Account,
-  AccountsRepository,
-} from "./accountsRepository.js";
+import type { AccountEntry } from "./accountEntriesRepository.js";
+import type { Account, AccountsRepository } from "./accountsRepository.js";
 
 export class PostgresAccountsRepository implements AccountsRepository {
   async findById(id: string): Promise<Account | null> {
@@ -82,6 +80,30 @@ export class PostgresAccountsRepository implements AccountsRepository {
       active: row.active,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
+    }));
+  }
+  async findEntriesByAccountId(accountId: string): Promise<AccountEntry[]> {
+    const result = await pool.query(
+      `
+      SELECT
+        me.direction,
+        me.amount
+      FROM movement_entries me
+      INNER JOIN movements m
+        ON m.id = me.movement_id
+      WHERE me.account_id = $1
+        AND m.deleted_at IS NULL
+      ORDER BY
+        m.movement_date ASC,
+        m.movement_time ASC,
+        me.created_at ASC
+    `,
+      [accountId],
+    );
+
+    return result.rows.map((row) => ({
+      direction: row.direction,
+      amount: Number(row.amount),
     }));
   }
 

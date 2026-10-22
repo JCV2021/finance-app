@@ -1,4 +1,5 @@
 import type { CreateAccountInput } from "../controllers/createAccountInput.js";
+import type { AccountEntry } from "./accountEntriesRepository.js";
 
 export type Account = {
   id: string;
@@ -26,5 +27,6 @@ export type Account = {
 export interface AccountsRepository {
   findById(id: string): Promise<Account | null>;
   findByUserId(userId: string): Promise<Account[]>;
+  findEntriesByAccountId(accountId: string): Promise<AccountEntry[]>;
   create(input: CreateAccountInput): Promise<Account>;
 }
