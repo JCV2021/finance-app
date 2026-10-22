@@ -6,3 +6,9 @@ export async function getAccountById(
 ) {
   return controller.getById(id);
 }
+export async function getAccountsByUserId(
+  controller: AccountsController,
+  userId: string,
+) {
+  return controller.getByUserId(userId);
+}

@@ -17,6 +17,10 @@ export class AccountsController {
     return account;
   }
 
+  async getByUserId(userId: string) {
+  return this.accountsRepository.findByUserId(userId);
+}
+
   async create(input: CreateAccountInput) {
   validateCreateAccountInput(input);
 

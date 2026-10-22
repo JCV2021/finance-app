@@ -1,7 +1,10 @@
 import "dotenv/config";
 import { createServer, type IncomingMessage } from "node:http";
 import { healthRoute } from "./routes/health.js";
-import { getAccountById } from "./routes/accounts.js";
+import {
+  getAccountById,
+  getAccountsByUserId,
+} from "./routes/accounts.js";
 import { AccountsController } from "./controllers/accountsController.js";
 import { PostgresAccountsRepository } from "./repositories/postgresAccountsRepository.js";
 import type { CreateAccountInput } from "./controllers/createAccountInput.js";
@@ -109,7 +112,79 @@ const server = createServer(async (req, res) => {
   );
 
   return;
-}
+  }
+ }
+
+// GET /api/v1/accounts?userId=...
+if (
+  req.method === "GET" &&
+  req.url?.startsWith("/api/v1/accounts?")
+) {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const userId = url.searchParams.get("userId");
+
+  if (!userId) {
+    res.writeHead(400, {
+      "Content-Type": "application/json",
+    });
+
+    res.end(
+      JSON.stringify({
+        success: false,
+        data: null,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "El userId es obligatorio",
+        },
+        meta: {},
+      }),
+    );
+
+    return;
+  }
+
+  try {
+    const accounts = await getAccountsByUserId(
+      accountsController,
+      userId,
+    );
+
+    res.writeHead(200, {
+      "Content-Type": "application/json",
+    });
+
+    res.end(
+      JSON.stringify({
+        success: true,
+        data: accounts,
+        error: null,
+        meta: {},
+      }),
+    );
+
+    return;
+  } catch (error) {
+    console.error("Error obteniendo cuentas:", error);
+
+    res.writeHead(500, {
+      "Content-Type": "application/json",
+    });
+
+    res.end(
+      JSON.stringify({
+        success: false,
+        data: null,
+        error: {
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Error interno del servidor",
+        },
+        meta: {},
+      }),
+    );
+
+    return;
+  }
+
 }
   const accountMatch = req.url?.match(
     /^\/api\/v1\/accounts\/([^/]+)$/,
