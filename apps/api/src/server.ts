@@ -5,6 +5,7 @@ import { getAccountById } from "./routes/accounts.js";
 import { AccountsController } from "./controllers/accountsController.js";
 import { PostgresAccountsRepository } from "./repositories/postgresAccountsRepository.js";
 import type { CreateAccountInput } from "./controllers/createAccountInput.js";
+import { ValidationError } from "./controllers/validationError.js";
 
 const accountsRepository = new PostgresAccountsRepository();
 const accountsController = new AccountsController(accountsRepository);
@@ -48,25 +49,67 @@ const server = createServer(async (req, res) => {
   }
 
   if (req.method === "POST" && req.url === "/api/v1/accounts") {
-  const body = await readJsonBody(req);
-  const input = body as CreateAccountInput;
+  try {
+    const body = await readJsonBody(req);
+    const input = body as CreateAccountInput;
 
-  const account = await accountsController.create(input);
+    const account = await accountsController.create(input);
 
-  res.writeHead(201, {
+    res.writeHead(201, {
+      "Content-Type": "application/json",
+    });
+
+    res.end(
+      JSON.stringify({
+        success: true,
+        data: account,
+        error: null,
+        meta: {},
+      }),
+    );
+
+    return;
+  }catch (error) {
+  console.error("Error creating account:", error);
+
+  if (error instanceof ValidationError) {
+    res.writeHead(422, {
+      "Content-Type": "application/json",
+    });
+
+    res.end(
+      JSON.stringify({
+        success: false,
+        data: null,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: error.message,
+        },
+        meta: {},
+      }),
+    );
+
+    return;
+  }
+
+  res.writeHead(500, {
     "Content-Type": "application/json",
   });
 
   res.end(
     JSON.stringify({
-      success: true,
-      data: account,
-      error: null,
+      success: false,
+      data: null,
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Error interno del servidor",
+      },
       meta: {},
     }),
   );
 
   return;
+}
 }
   const accountMatch = req.url?.match(
     /^\/api\/v1\/accounts\/([^/]+)$/,
